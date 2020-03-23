@@ -1,3 +1,4 @@
+
 import string
 from chatterbot import languages
 from chatterbot import utils
@@ -7,6 +8,11 @@ from nltk.corpus import wordnet, stopwords
 from nltk.corpus.reader.wordnet import WordNetError
 import spacy
 
+import jieba
+import codecs
+import re
+import os
+open=codecs.open
 
 class PosLemmaTagger(object):
 
@@ -146,9 +152,7 @@ class PosHypernymTagger(object):
         """
         For example:
         What a beautiful swamp
-
         becomes:
-
         DT:beautiful JJ:wetland
         """
         WORD_INDEX = 0
@@ -196,3 +200,41 @@ class PosHypernymTagger(object):
             all_bigrams = high_quality_bigrams
 
         return ' '.join(all_bigrams)
+
+class ChineseTagger(object):
+
+    """
+    Handling chinese text 
+    """
+
+    def __init__(self, language=None):
+        
+        self.stopword=[]
+        cfp=open(os.path.dirname(__file__) + '/data/cn_stopwords.txt','r+','utf-8')   #停用词的txt文件
+        for line in cfp:
+            for word in line.split():
+                self.stopword.append(word)
+        cfp.close()
+
+    def get_bigram_pair_string(self, text):
+        """
+        Return a string of text containing part-of-speech, lemma pairs.
+        """
+        bigram_pairs = []
+
+	 #利用正则表达式去掉一些一些标点符号之类的符号。
+        text = re.sub(r'\s+', ' ', text)  # trans 多空格 to空格
+        text = re.sub(r'\n+', ' ', text)  # trans 换行 to空格
+        text = re.sub(r'\t+', ' ', text)  # trans Tab to空格
+        text = re.sub("[\s+\.\!\/_,$%^*(+\"\']+|[+——；！，”。《》，。：“？、~@#￥%……&*（）1234567①②③④)]+".\
+                          encode().decode("utf8"), "".encode().decode("utf8"), text)
+  
+        wordlist = list(jieba.cut(text))#jieba.cut  把字符串切割成词并添加至一个列表
+        for word in wordlist:
+            if word not in self.stopword:#词语的清洗：去停用词
+                if word != '\r\n'  and word!=' ' and word != '\u3000'.encode().decode('unicode_escape') \
+                        and word!='\xa0'.encode().decode('unicode_escape'):#词语的清洗：去全角空格
+                    bigram_pairs.append(word)
+
+       
+        return ' '.join(bigram_pairs)
