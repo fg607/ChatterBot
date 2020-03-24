@@ -16,7 +16,7 @@ class StorageAdapter(object):
         self.logger = kwargs.get('logger', logging.getLogger(__name__))
 
         self.tagger = ChineseTagger(language=kwargs.get(
-            'tagger_language', languages.ENG
+            'tagger_language', languages.CHI
         ))
 
     def get_model(self, model_name):
